@@ -62,9 +62,9 @@ export default function Home() {
       const fileCount = data.length;
       setStats({ totalSize, fileCount });
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error fetching files:', error);
-      toast.error(error.message || 'Failed to fetch files from R2.');
+      toast.error((error instanceof Error ? error.message : String(error)) || 'Failed to fetch files from R2.');
       setFiles([]); // Set files to empty array on error
       setStats({ totalSize: 0, fileCount: 0 }); // Reset stats on error
     }
@@ -230,7 +230,7 @@ export default function Home() {
     }
   };
 
-  const getFileIcon = (file: FileObject): JSX.Element => {
+  const getFileIcon = (file: FileObject) => {
     const extension = file.Key.split('.').pop()?.toLowerCase();
     // ContentType is not available in the list API response, so use extension for icons in the grid.
     // In the modal (where selectedFile has ContentType), we could use ContentType for more accuracy, but extension is usually sufficient.
@@ -571,7 +571,7 @@ export default function Home() {
                 </svg>
                 <h3 className="mt-4 text-lg font-medium text-gray-900">Delete File</h3>
                 <p className="mt-2 text-sm text-gray-500">
-                  Are you sure you want to delete "{selectedFile.Key}"? This action cannot be undone.
+                  Are you sure you want to delete &quot;{selectedFile.Key}&quot;? This action cannot be undone.
                 </p>
                 <div className="mt-6 flex flex-col sm:flex-row gap-3 justify-center">
                   <button

@@ -61,30 +61,27 @@ export async function GET(request: Request) {
         })) || [];
 
         return NextResponse.json(files);
-      } catch (r2Error: any) {
+      } catch (r2Error: unknown) {
         console.error('R2 Error Details:', {
-          name: r2Error.name,
-          message: r2Error.message,
-          code: r2Error.code,
-          requestId: r2Error.$metadata?.requestId,
-          cfId: r2Error.$metadata?.cfId,
-          extendedRequestId: r2Error.$metadata?.extendedRequestId,
+          name: r2Error instanceof Error ? r2Error.name : 'UnknownError',
+          message: r2Error instanceof Error ? r2Error.message : String(r2Error),
+          code: r2Error && typeof r2Error === 'object' && 'code' in r2Error ? (r2Error as any).code : undefined,
         });
         return NextResponse.json({ 
           error: 'Failed to fetch files from R2',
-          details: r2Error.message 
+          details: r2Error instanceof Error ? r2Error.message : String(r2Error) 
         }, { status: 500 });
       }
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('API Error:', {
-      name: error.name,
-      message: error.message,
-      stack: error.stack
+      name: error instanceof Error ? error.name : 'UnknownError',
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined
     });
     return NextResponse.json({ 
       error: 'Failed to process request',
-      details: error.message 
+      details: error instanceof Error ? error.message : String(error) 
     }, { status: 500 });
   }
 }
@@ -105,15 +102,15 @@ export async function DELETE(request: Request) {
 
     await s3Client.send(command);
     return NextResponse.json({ message: 'File deleted successfully' });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error deleting file:', {
-      name: error.name,
-      message: error.message,
-      stack: error.stack
+      name: error instanceof Error ? error.name : 'UnknownError',
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined
     });
     return NextResponse.json({ 
       error: 'Failed to delete file',
-      details: error.message 
+      details: error instanceof Error ? error.message : String(error) 
     }, { status: 500 });
   }
 } 
