@@ -1,0 +1,26 @@
+[build]
+command = "npm run build"
+publish = ".next"
+
+[build.environment]
+NODE_VERSION = "20"
+
+[[r2_buckets]]
+binding = 'BUCKET'
+bucket_name = 'drive'
+
+[site]
+bucket = ".next"
+
+[env.production]
+name = "personaldrive"
+workers_dev = true
+
+[env.production.vars]
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY = ""  # Will be set in Cloudflare dashboard
+CLERK_SECRET_KEY = ""  # Will be set in Cloudflare dashboard
+R2_ACCESS_KEY_ID = ""  # Will be set in Cloudflare dashboard
+R2_SECRET_ACCESS_KEY = ""  # Will be set in Cloudflare dashboard
+R2_ENDPOINT = ""  # Will be set in Cloudflare dashboard
+R2_BUCKET_NAME = "drive"  # Using the same name as in R2 bucket binding
+AUTH_SECRET_KEY = ""  # Will be set in Cloudflare dashboard
