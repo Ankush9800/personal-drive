@@ -5,6 +5,8 @@ const nextConfig: NextConfig = {
   images: {
     unoptimized: true // Required for Cloudflare Pages
   },
+  skipMiddlewareUrlNormalize: true,
+  skipTrailingSlashRedirect: true,
   experimental: {
     serverActions: {
       allowedOrigins: ["*"],
