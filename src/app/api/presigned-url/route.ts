@@ -50,14 +50,11 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ url: presignedUrl, fileName: uniqueFileName, fileType }, { headers });
 
-  } catch (error: unknown) {
+  } catch (error: any) {
     console.error('Error generating pre-signed URL:', error);
-    const errorMessage = error && typeof error === 'object' && 'message' in error && typeof error.message === 'string' 
-      ? error.message 
-      : 'An unknown error occurred';
     return NextResponse.json({ 
       error: 'Failed to generate pre-signed URL',
-      details: errorMessage
+      details: error.message
     }, { status: 500, headers });
   }
 } 
