@@ -6,7 +6,10 @@ const nextConfig: NextConfig = {
     unoptimized: true, // Required for Cloudflare Pages
   },
   experimental: {
-    serverActions: true,
+    serverActions: {
+      allowedOrigins: ["*"],
+      bodySizeLimit: '2mb'
+    }
   },
 };
 

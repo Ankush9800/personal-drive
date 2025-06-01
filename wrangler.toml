@@ -1,6 +1,6 @@
 [build]
 command = "npm run build"
-publish = ".next"
+pages_build_output_dir = ".next/standalone"
 
 [build.environment]
 NODE_VERSION = "20"
