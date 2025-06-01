@@ -1,17 +1,14 @@
 [build]
 command = "npm run build"
-pages_build_output_dir = ".next/static"
-compatibility_date = "2024-01-01"
-
-[build.environment]
-NODE_VERSION = "20"
+output_directory = ".next"
+pages_build_output_dir = ".next"
 
 [[r2_buckets]]
 binding = 'BUCKET'
 bucket_name = 'drive'
 
-[site]
-bucket = ".next/static"
+[build.environment]
+NODE_VERSION = "20"
 
 [env.production]
 name = "personaldrive"
