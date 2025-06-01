@@ -3,17 +3,35 @@ import { GetObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { r2Client } from '@/utils/r2';
 
+interface ShareRequest {
+  key: string;
+}
+
 export async function POST(request: Request) {
   try {
-    const { key } = await request.json();
-
-    if (!key) {
-      return NextResponse.json({ error: 'No file key provided' }, { status: 400 });
+    // Check if the Content-Type is application/json
+    const contentType = request.headers.get('Content-Type');
+    if (!contentType || !contentType.includes('application/json')) {
+      return NextResponse.json(
+        { error: 'Content-Type must be application/json' },
+        { status: 415 }
+      );
     }
 
-    const command = new GetObjectCommand({
+    let body: ShareRequest;    try {
+      body = await request.json() as ShareRequest;
+    } catch {
+      return NextResponse.json(
+        { error: 'Invalid JSON payload' },
+        { status: 400 }
+      );
+    }
+
+    if (!body.key) {
+      return NextResponse.json({ error: 'No file key provided' }, { status: 400 });
+    }    const command = new GetObjectCommand({
       Bucket: process.env.R2_BUCKET_NAME,
-      Key: key,
+      Key: body.key,
     });
 
     // Generate a signed URL that expires in 24 hours

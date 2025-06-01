@@ -10,8 +10,12 @@ const s3Client = new S3Client({
     secretAccessKey: process.env.R2_SECRET_ACCESS_KEY!,
   },
   forcePathStyle: true,
-  checksumValidation: false,
 });
+
+interface PresignedUrlRequest {
+  fileName: string;
+  fileType: string;
+}
 
 export async function POST(request: Request) {
   const headers = {
@@ -25,7 +29,7 @@ export async function POST(request: Request) {
   }
 
   try {
-    const { fileName, fileType } = await request.json();
+    const { fileName, fileType } = await request.json() as PresignedUrlRequest;
 
     if (!fileName || !fileType) {
       return NextResponse.json({ error: 'fileName and fileType are required' }, { status: 400, headers });
