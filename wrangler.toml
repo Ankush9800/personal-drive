@@ -1,6 +1,7 @@
 [build]
 command = "npm run build"
-pages_build_output_dir = "out"
+output_directory = ".next"
+pages_build_output_dir = ".next"
 
 [[r2_buckets]]
 binding = 'BUCKET'
