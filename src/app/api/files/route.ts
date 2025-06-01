@@ -65,8 +65,8 @@ export async function GET(request: Request) {
         console.error('R2 Error Details:', {
           name: r2Error && typeof r2Error === 'object' && 'name' in r2Error && typeof r2Error.name === 'string' ? r2Error.name : 'UnknownError',
           message: r2Error && typeof r2Error === 'object' && 'message' in r2Error && typeof r2Error.message === 'string' ? r2Error.message : 'An unknown error occurred',
-          metadata: r2Error && typeof r2Error === 'object' && '$metadata' in r2Error && typeof (r2Error as any).$metadata === 'object' ? (r2Error as any).$metadata : undefined,
-          code: r2Error && typeof r2Error === 'object' && 'code' in r2Error && typeof (r2Error as any).code !== 'undefined' ? (r2Error as any).code : undefined,
+          metadata: r2Error && typeof r2Error === 'object' && '$metadata' in r2Error ? (r2Error as { $metadata?: unknown }).$metadata : undefined,
+          code: r2Error && typeof r2Error === 'object' && 'code' in r2Error ? (r2Error as { code?: unknown }).code : undefined,
         });
         return NextResponse.json({ 
           error: 'Failed to fetch files from R2',

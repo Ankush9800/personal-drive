@@ -572,7 +572,7 @@ export default function Home() {
                 </svg>
                 <h3 className="mt-4 text-lg font-medium text-gray-900">Delete File</h3>
                 <p className="mt-2 text-sm text-gray-500">
-                  Are you sure you want to delete "{selectedFile.Key}"? This action cannot be undone.
+                  Are you sure you want to delete &quot;{selectedFile.Key}&quot;? This action cannot be undone.
                 </p>
                 <div className="mt-6 flex flex-col sm:flex-row gap-3 justify-center">
                   <button
