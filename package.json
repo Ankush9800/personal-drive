@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "cd r2-worker && npm install && cd .. && next build && mkdir -p .next/static/_next && cp -r public/* .next/static/ && cp -r .next/static/_next .next/static/",
+    "build": "cd r2-worker && npm install && cd .. && next build && powershell -Command \"New-Item -ItemType Directory -Force -Path .next/static/_next; Copy-Item -Path public/* -Destination .next/static/ -Recurse -Force; Copy-Item -Path .next/static/_next/* -Destination .next/static/ -Recurse -Force\"",
     "start": "next start",
     "lint": "next lint"
   },
