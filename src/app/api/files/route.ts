@@ -61,30 +61,28 @@ export async function GET(request: Request) {
         })) || [];
 
         return NextResponse.json(files);
-      } catch (r2Error: any) {
+      } catch (r2Error: unknown) {
         console.error('R2 Error Details:', {
-          name: r2Error.name,
-          message: r2Error.message,
-          code: r2Error.code,
-          requestId: r2Error.$metadata?.requestId,
-          cfId: r2Error.$metadata?.cfId,
-          extendedRequestId: r2Error.$metadata?.extendedRequestId,
+          name: r2Error && typeof r2Error === 'object' && 'name' in r2Error && typeof r2Error.name === 'string' ? r2Error.name : 'UnknownError',
+          message: r2Error && typeof r2Error === 'object' && 'message' in r2Error && typeof r2Error.message === 'string' ? r2Error.message : 'An unknown error occurred',
+          metadata: r2Error && typeof r2Error === 'object' && '$metadata' in r2Error && typeof (r2Error as any).$metadata === 'object' ? (r2Error as any).$metadata : undefined,
+          code: r2Error && typeof r2Error === 'object' && 'code' in r2Error && typeof (r2Error as any).code !== 'undefined' ? (r2Error as any).code : undefined,
         });
         return NextResponse.json({ 
           error: 'Failed to fetch files from R2',
-          details: r2Error.message 
+          details: r2Error instanceof Error ? r2Error.message : 'An unknown error occurred'
         }, { status: 500 });
       }
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('API Error:', {
-      name: error.name,
-      message: error.message,
-      stack: error.stack
+      name: error && typeof error === 'object' && 'name' in error && typeof error.name === 'string' ? error.name : 'UnknownError',
+      message: error && typeof error === 'object' && 'message' in error && typeof error.message === 'string' ? error.message : 'An unknown error occurred',
+      stack: error && typeof error === 'object' && 'stack' in error && typeof error.stack === 'string' ? error.stack : undefined
     });
     return NextResponse.json({ 
       error: 'Failed to process request',
-      details: error.message 
+      details: error instanceof Error ? error.message : 'An unknown error occurred'
     }, { status: 500 });
   }
 }
@@ -105,15 +103,15 @@ export async function DELETE(request: Request) {
 
     await s3Client.send(command);
     return NextResponse.json({ message: 'File deleted successfully' });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error deleting file:', {
-      name: error.name,
-      message: error.message,
-      stack: error.stack
+      name: error && typeof error === 'object' && 'name' in error && typeof error.name === 'string' ? error.name : 'UnknownError',
+      message: error && typeof error === 'object' && 'message' in error && typeof error.message === 'string' ? error.message : 'An unknown error occurred',
+      stack: error && typeof error === 'object' && 'stack' in error && typeof error.stack === 'string' ? error.stack : undefined
     });
     return NextResponse.json({ 
       error: 'Failed to delete file',
-      details: error.message 
+      details: error instanceof Error ? error.message : 'An unknown error occurred'
     }, { status: 500 });
   }
 } 

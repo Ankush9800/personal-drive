@@ -10,6 +10,8 @@ import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { formatFileSize } from '@/lib/utils';
+import { format, parseISO } from 'date-fns';
+import { FileTextIcon, ImageIcon, FileIcon, Trash2Icon, Share2Icon, DownloadIcon, MoreHorizontalIcon } from 'lucide-react';
 
 // Import icons from react-icons
 import { 
@@ -44,6 +46,8 @@ export default function Home() {
   const [xhrInstance, setXhrInstance] = useState<XMLHttpRequest | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
+  const [totalSize, setTotalSize] = useState(0);
+  const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
 
   const fetchFiles = async () => {
     try {
@@ -61,6 +65,7 @@ export default function Home() {
       const totalSize = data.reduce((sum, file) => sum + (file.Size || 0), 0);
       const fileCount = data.length;
       setStats({ totalSize, fileCount });
+      setTotalSize(totalSize);
 
     } catch (error: any) {
       console.error('Error fetching files:', error);
@@ -319,22 +324,18 @@ export default function Home() {
         {/* Storage Stats */}
         <Card className="mb-8">
           <CardHeader>
-            <CardTitle>Storage Overview</CardTitle>
+            <CardTitle>
+              <div className="text-xl font-semibold">Storage Overview</div>
+              <div className="text-sm text-gray-500">Total used space and file count.</div>
+            </CardTitle>
+            <CardContent>
+              <div className="flex flex-col items-end">
+                <div className="text-lg font-semibold">{formatFileSize(totalSize)} / Infinite</div> { /* Display total size */}
+                <div className="text-sm text-gray-500">{files.length} Files</div> { /* Display file count */}
+              </div>
+              <Progress value={0} className="w-full" /> { /* Progress bar with value 0 for infinite */}
+            </CardContent>
           </CardHeader>
-          <CardContent>
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <p className="text-2xl font-bold text-gray-800">{formatFileSize(stats.totalSize)}</p>
-                <p className="text-sm text-gray-500">Used of ∞</p> {/* Display infinity symbol */}
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-gray-800 text-right">{stats.fileCount}</p>
-                <p className="text-sm text-gray-500">Total Files</p>
-              </div>
-            </div>
-            {/* Progress Bar - visual representation */} 
-            <Progress value={0} className="h-2" /> {/* Value is 0 as limit is infinite */}
-          </CardContent>
         </Card>
 
         {/* Main Content */}
