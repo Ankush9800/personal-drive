@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "cd r2-worker && npm install && cd .. && next build && cp -r public/* .next/static/ && cp -r .next/static/* .next/static/_next/static/",
+    "build": "cd r2-worker && npm install && cd .. && next build && mkdir -p .next/static/_next && cp -r .next/static/* .next/static/_next/ && cp -r public/* .next/static/",
     "start": "next start",
     "lint": "next lint"
   },
