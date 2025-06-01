@@ -1,12 +1,10 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  output: 'standalone',
+  output: 'export',
   images: {
     unoptimized: true // Required for Cloudflare Pages
   },
-  skipMiddlewareUrlNormalize: true,
-  skipTrailingSlashRedirect: true,
   experimental: {
     serverActions: {
       allowedOrigins: ["*"],

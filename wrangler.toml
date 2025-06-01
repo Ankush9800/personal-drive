@@ -1,6 +1,6 @@
 [build]
 command = "npm run build"
-pages_build_output_dir = ".next/standalone"
+pages_build_output_dir = "out"
 
 [[r2_buckets]]
 binding = 'BUCKET'
