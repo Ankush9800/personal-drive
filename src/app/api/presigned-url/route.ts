@@ -34,14 +34,9 @@ export async function POST(request: Request) {
       ContentType: fileType,
     });
 
-    const signedUrlOptions = {
+    const presignedUrl = await getSignedUrl(r2Client, putCommand, {
       expiresIn: 3600,
-      signingRegion: 'auto',
-      signingService: 's3',
-      signingEscapePath: false,
-    };
-
-    const presignedUrl = await getSignedUrl(r2Client, putCommand, signedUrlOptions);
+    });
 
     return NextResponse.json({ url: presignedUrl, fileName: uniqueFileName, fileType }, { headers });
 
@@ -52,4 +47,4 @@ export async function POST(request: Request) {
       details: error instanceof Error ? error.message : String(error)
     }, { status: 500, headers });
   }
-} 
+}
