@@ -3,10 +3,6 @@ command = "npm run build"
 output_directory = ".next"
 pages_build_output_dir = ".next"
 
-[[r2_buckets]]
-binding = 'BUCKET'
-bucket_name = 'drive'
-
 [build.environment]
 NODE_VERSION = "20"
 

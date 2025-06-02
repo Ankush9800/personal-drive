@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
-import { S3Client, ListObjectsV2Command, GetObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
+import { ListObjectsV2Command, GetObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
+import { r2Client } from '@/utils/r2';
 
 // Log R2 configuration (without sensitive data)
 console.log('R2 Configuration:', {
@@ -7,16 +8,6 @@ console.log('R2 Configuration:', {
   bucketName: process.env.R2_BUCKET_NAME,
   hasAccessKey: !!process.env.R2_ACCESS_KEY_ID,
   hasSecretKey: !!process.env.R2_SECRET_ACCESS_KEY,
-});
-
-const s3Client = new S3Client({
-  region: 'us-east-1', // Required for R2
-  endpoint: process.env.R2_ENDPOINT,
-  credentials: {
-    accessKeyId: process.env.R2_ACCESS_KEY_ID!,
-    secretAccessKey: process.env.R2_SECRET_ACCESS_KEY!,
-  },
-  forcePathStyle: true, // Required for R2
 });
 
 export async function GET(request: Request) {
@@ -31,7 +22,7 @@ export async function GET(request: Request) {
         Key: key,
       });
 
-      const response = await s3Client.send(command);
+      const response = await r2Client.send(command);
       const stream = response.Body as ReadableStream;
       const contentType = response.ContentType || 'application/octet-stream'; // Get ContentType, default to octet-stream
 
@@ -48,7 +39,7 @@ export async function GET(request: Request) {
 
       try {
         console.log('Attempting to list objects from R2...');
-        const response = await s3Client.send(command);
+        const response = await r2Client.send(command);
         console.log('R2 Response:', JSON.stringify(response, null, 2));
 
         // Format the response to ensure it's an array

@@ -1,16 +1,7 @@
 import { NextResponse } from 'next/server';
-import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
+import { PutObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
-
-const s3Client = new S3Client({
-  region: 'auto',
-  endpoint: process.env.R2_ENDPOINT,
-  credentials: {
-    accessKeyId: process.env.R2_ACCESS_KEY_ID!,
-    secretAccessKey: process.env.R2_SECRET_ACCESS_KEY!,
-  },
-  forcePathStyle: true,
-});
+import { r2Client } from '@/utils/r2';
 
 interface PresignedUrlRequest {
   fileName: string;
@@ -50,7 +41,7 @@ export async function POST(request: Request) {
       signingEscapePath: false,
     };
 
-    const presignedUrl = await getSignedUrl(s3Client, putCommand, signedUrlOptions);
+    const presignedUrl = await getSignedUrl(r2Client, putCommand, signedUrlOptions);
 
     return NextResponse.json({ url: presignedUrl, fileName: uniqueFileName, fileType }, { headers });
 
