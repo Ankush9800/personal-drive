@@ -79,63 +79,76 @@ export default function Home() {
     setUploading(true);
     setUploadProgress(0);
 
-    // Use the deployed Cloudflare Worker for direct upload
-    const workerUrl = 'https://r2-worker.ankushbhanja1.workers.dev'; // Replace with your actual Worker URL if different
-    const targetUrl = `${workerUrl}/${encodeURIComponent(file.name)}`;
+    try {
+      // Get presigned URL from our API
+      const presignedResponse = await fetch('/api/presigned-url', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          fileName: file.name,
+          fileType: file.type,
+        }),
+      });
 
-    const xhr = new XMLHttpRequest();
-    setXhrInstance(xhr);
-
-    xhr.upload.onprogress = (event) => {
-      if (event.lengthComputable) {
-        const progress = (event.loaded / event.total) * 100;
-        setUploadProgress(Math.round(progress));
+      if (!presignedResponse.ok) {
+        throw new Error('Failed to get upload URL');
       }
-    };
 
-    xhr.onload = async () => {
-      setXhrInstance(null);
-      if (xhr.status >= 200 && xhr.status < 300) { // Check for success status codes
-        await fetchFiles();
-        setUploadProgress(100);
-        toast.success('File uploaded successfully via Worker');
-        setTimeout(() => {
+      const { url: targetUrl } = await presignedResponse.json();
+      
+      const xhr = new XMLHttpRequest();
+      setXhrInstance(xhr);
+
+      xhr.upload.onprogress = (event) => {
+        if (event.lengthComputable) {
+          const progress = (event.loaded / event.total) * 100;
+          setUploadProgress(Math.round(progress));
+        }
+      };
+
+      xhr.onload = async () => {
+        setXhrInstance(null);
+        if (xhr.status >= 200 && xhr.status < 300) {
+          await fetchFiles();
+          setUploadProgress(100);
+          toast.success('File uploaded successfully');
+          setTimeout(() => {
+            setUploading(false);
+            setUploadProgress(0);
+          }, 1000);
+        } else {
+          const errorText = xhr.responseText || `Status: ${xhr.status}`;
+          console.error('Upload failed:', xhr.status, errorText);
+          toast.error(`Upload failed: ${errorText}`);
           setUploading(false);
-          setUploadProgress(0);
-        }, 1000);
-      } else {
-        const errorText = xhr.responseText || `Status: ${xhr.status}`;
-        console.error('Upload failed via Worker:', xhr.status, errorText);
-        toast.error(`Upload failed: ${errorText}`);
+        }
+      };
+
+      xhr.onerror = (error) => {
+        setXhrInstance(null);
+        console.error('Upload error:', error);
+        toast.error('Upload failed: Network error');
         setUploading(false);
-      }
-    };
+      };
 
-    xhr.onerror = (error) => {
-      setXhrInstance(null);
-      console.error('Upload error via Worker:', error);
-      toast.error('Upload failed: Network error connecting to Worker');
+      xhr.onabort = () => {
+        setXhrInstance(null);
+        setUploading(false);
+        setUploadProgress(0);
+        toast.info('Upload cancelled');
+      };
+
+      xhr.open('PUT', targetUrl);
+      xhr.setRequestHeader('Content-Type', file.type);
+      xhr.send(file);
+      
+    } catch (error: unknown) {
+      console.error('Upload error:', error);
+      toast.error(error instanceof Error ? error.message : 'Upload failed');
       setUploading(false);
-    };
-
-    xhr.onabort = () => {
-      setXhrInstance(null);
-      setUploading(false);
-      setUploadProgress(0);
-      toast.info('Upload cancelled');
-    };
-
-    // Set up the upload to the Worker
-    xhr.open('PUT', targetUrl);
-    // Include the authorization header
-    xhr.setRequestHeader('X-Custom-Auth-Key', 'Ankush9564@'); // <<< REPLACE WITH YOUR SECRET KEY
-    xhr.setRequestHeader('Content-Type', file.type); // Set content type
-
-    // Log the upload attempt
-    console.log('Starting upload to Worker for:', file.name);
-    console.log('Target URL:', targetUrl);
-
-    xhr.send(file);
+    }
   };
 
   const handleCancelUpload = () => {
@@ -167,18 +180,34 @@ export default function Home() {
 
   const handleDownload = async (file: FileObject) => {
     try {
-      const response = await fetch(`/api/files?key=${encodeURIComponent(file.Key)}`);
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
+      // Get a presigned URL for download
+      const response = await fetch('/api/presigned-url', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          fileName: file.Key,
+          operation: 'download'
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to get download URL');
+      }
+
+      const { url } = await response.json();
+      
+      // Create a temporary link and click it to start the download
       const a = document.createElement('a');
       a.href = url;
       a.download = file.Key;
       document.body.appendChild(a);
       a.click();
-      window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
     } catch (error) {
       console.error('Download error:', error);
+      toast.error('Failed to download file');
     }
   };
 
@@ -261,25 +290,37 @@ export default function Home() {
   };
 
   const getFilePreview = (file: FileObject) => {
-    // For grid view, infer image type from extension as ContentType is not available in list API
     const extension = file.Key.split('.').pop()?.toLowerCase();
-    const isImage = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'svg'].includes(extension || '');
+    const isImage = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'].includes(extension || '');
+    const isSvg = extension === 'svg';
 
-    if (isImage) {
+    if (isImage || isSvg) {
       return (
         <div className="relative w-full h-40 rounded-lg overflow-hidden bg-gray-100 flex items-center justify-center">
-          <Image
-            src={`/api/files?key=${encodeURIComponent(file.Key)}`}
-            alt={file.Key}
-            fill
-            sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, 25vw"
-            style={{ objectFit: 'cover' }}
-            priority={false}
-          />
+          {isSvg ? (
+            <div className="w-full h-full flex items-center justify-center">
+              <object
+                data={`/api/files?key=${encodeURIComponent(file.Key)}`}
+                type="image/svg+xml"
+                className="w-full h-full p-2"
+                style={{ objectFit: 'contain' }}
+              >
+                SVG Preview
+              </object>
+            </div>
+          ) : (
+            <Image
+              src={`/api/files?key=${encodeURIComponent(file.Key)}`}
+              alt={file.Key}
+              fill
+              sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, 25vw"
+              style={{ objectFit: 'cover' }}
+              priority={false}
+            />
+          )}
         </div>
       );
     }
-    // Return null for non-image types in the grid view
     return null;
   };
 
@@ -293,7 +334,7 @@ export default function Home() {
 
     if (['doc', 'docx', 'pdf', 'txt', 'log', 'md'].includes(extension || '')) {
       return 'Documents';
-    } else if (['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'svg'].includes(extension || '')) {
+    } else if (['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'].includes(extension || '')) {
       return 'Photos';
     } else if (['mp4', 'avi', 'mov', 'wmv', 'flv', 'webm'].includes(extension || '')) {
       return 'Videos';
@@ -486,14 +527,27 @@ export default function Home() {
                 </button>
               </div>
               <div className="aspect-w-16 aspect-h-9 bg-gray-100 rounded-lg overflow-hidden">
-                {selectedFile.ContentType?.includes('image') ? (
-          <Image
-                    src={`/api/files?key=${encodeURIComponent(selectedFile.Key)}`}
-                    alt={selectedFile.Key}
-                    fill
-                    className="object-contain"
-                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                  />
+                {selectedFile.ContentType?.includes('image') || selectedFile.Key.toLowerCase().endsWith('.svg') ? (
+                  selectedFile.Key.toLowerCase().endsWith('.svg') ? (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <object
+                        data={`/api/files?key=${encodeURIComponent(selectedFile.Key)}`}
+                        type="image/svg+xml"
+                        className="w-full h-full p-4"
+                        style={{ objectFit: 'contain' }}
+                      >
+                        SVG Preview
+                      </object>
+                    </div>
+                  ) : (
+                    <Image
+                      src={`/api/files?key=${encodeURIComponent(selectedFile.Key)}`}
+                      alt={selectedFile.Key}
+                      fill
+                      className="object-contain"
+                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                    />
+                  )
                 ) : selectedFile.ContentType?.includes('video') ? (
                   <video controls className="w-full h-full object-contain">
                     <source src={`/api/files?key=${encodeURIComponent(selectedFile.Key)}`} type={selectedFile.ContentType} />

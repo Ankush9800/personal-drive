@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { ListObjectsV2Command, GetObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
+import { ListObjectsV2Command, GetObjectCommand, DeleteObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3';
 import { r2Client } from '@/utils/r2';
 
 // Log R2 configuration (without sensitive data)
@@ -24,7 +24,12 @@ export async function GET(request: Request) {
 
       const response = await r2Client.send(command);
       const stream = response.Body as ReadableStream;
-      const contentType = response.ContentType || 'application/octet-stream'; // Get ContentType, default to octet-stream
+      
+      // Set correct content type for SVG files
+      let contentType = response.ContentType || 'application/octet-stream';
+      if (key.toLowerCase().endsWith('.svg')) {
+        contentType = 'image/svg+xml';
+      }
 
       return new Response(stream, {
         headers: {
@@ -77,6 +82,34 @@ export async function GET(request: Request) {
   }
 }
 
+export async function POST(request: Request) {
+  try {
+    const formData = await request.formData();
+    const file = formData.get('file') as File;
+    
+    if (!file) {
+      return NextResponse.json({ error: 'No file provided' }, { status: 400 });
+    }
+
+    const buffer = await file.arrayBuffer();
+    const key = `${Date.now()}-${file.name}`;
+
+    const command = new PutObjectCommand({
+      Bucket: process.env.R2_BUCKET_NAME,
+      Key: key,
+      Body: Buffer.from(buffer),
+      ContentType: file.type,
+    });
+
+    await r2Client.send(command);
+
+    return NextResponse.json({ success: true, key });
+  } catch (error) {
+    console.error('Upload error:', error);
+    return NextResponse.json({ error: 'Upload failed' }, { status: 500 });
+  }
+}
+
 export async function DELETE(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
@@ -91,7 +124,7 @@ export async function DELETE(request: Request) {
       Key: key,
     });
 
-    await s3Client.send(command);
+    await r2Client.send(command);
     return NextResponse.json({ message: 'File deleted successfully' });
   } catch (error: unknown) {
     console.error('Error deleting file:', {
@@ -104,4 +137,4 @@ export async function DELETE(request: Request) {
       details: error instanceof Error ? error.message : String(error) 
     }, { status: 500 });
   }
-} 
+}

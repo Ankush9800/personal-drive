@@ -1,11 +1,12 @@
 import { NextResponse } from 'next/server';
-import { PutObjectCommand } from '@aws-sdk/client-s3';
+import { PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { r2Client } from '@/utils/r2';
 
 interface PresignedUrlRequest {
   fileName: string;
-  fileType: string;
+  fileType?: string;
+  operation?: 'upload' | 'download';
 }
 
 export async function POST(request: Request) {
@@ -20,25 +21,44 @@ export async function POST(request: Request) {
   }
 
   try {
-    const { fileName, fileType } = await request.json() as PresignedUrlRequest;
+    const { fileName, fileType, operation = 'upload' } = await request.json() as PresignedUrlRequest;
 
-    if (!fileName || !fileType) {
-      return NextResponse.json({ error: 'fileName and fileType are required' }, { status: 400, headers });
+    if (!fileName) {
+      return NextResponse.json({ error: 'fileName is required' }, { status: 400, headers });
     }
 
-    const uniqueFileName = `${Date.now()}-${fileName}`;
+    if (operation === 'upload' && !fileType) {
+      return NextResponse.json({ error: 'fileType is required for uploads' }, { status: 400, headers });
+    }
 
-    const putCommand = new PutObjectCommand({
-      Bucket: process.env.R2_BUCKET_NAME,
-      Key: uniqueFileName,
-      ContentType: fileType,
-    });
+    let command;
+    let key = fileName;
 
-    const presignedUrl = await getSignedUrl(r2Client, putCommand, {
+    if (operation === 'upload') {
+      key = `${Date.now()}-${fileName}`;
+      // Ensure SVG files are uploaded with correct MIME type
+      const contentType = fileName.toLowerCase().endsWith('.svg') ? 'image/svg+xml' : fileType;
+      command = new PutObjectCommand({
+        Bucket: process.env.R2_BUCKET_NAME,
+        Key: key,
+        ContentType: contentType,
+      });
+    } else {
+      command = new GetObjectCommand({
+        Bucket: process.env.R2_BUCKET_NAME,
+        Key: fileName,
+      });
+    }
+
+    const presignedUrl = await getSignedUrl(r2Client, command, {
       expiresIn: 3600,
     });
 
-    return NextResponse.json({ url: presignedUrl, fileName: uniqueFileName, fileType }, { headers });
+    return NextResponse.json({ 
+      url: presignedUrl, 
+      fileName: key,
+      ...(operation === 'upload' && { fileType })
+    }, { headers });
 
   } catch (error: unknown) {
     console.error('Error generating pre-signed URL:', error);

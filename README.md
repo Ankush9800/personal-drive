@@ -29,8 +29,27 @@ To learn more about Next.js, take a look at the following resources:
 
 You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
 
-## Deploy on Vercel
+## Deploy on Cloudflare Pages
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+This app is designed to be deployed on Cloudflare Pages with direct R2 storage integration.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### Required Environment Variables
+
+Set these environment variables in your Cloudflare Pages project settings:
+
+- `R2_ACCESS_KEY_ID`: Your R2 access key ID
+- `R2_SECRET_ACCESS_KEY`: Your R2 secret access key
+- `R2_ENDPOINT`: Your R2 endpoint URL (e.g., `https://<account-id>.r2.cloudflarestorage.com`)
+- `R2_BUCKET_NAME`: Your R2 bucket name (default: "drive")
+- `AUTH_SECRET_KEY`: A random string for session encryption
+
+### Deployment Steps
+
+1. Push your code to a Git repository
+2. In Cloudflare Pages:
+   - Connect your repository
+   - Set build command: `npm run build`
+   - Set build output directory: `.next`
+   - Set Node.js version: 20.x
+3. Configure environment variables in the Cloudflare dashboard
+4. Deploy!
