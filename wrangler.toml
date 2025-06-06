@@ -5,6 +5,7 @@ pages_build_output_dir = ".next"
 
 [build.environment]
 NODE_VERSION = "20"
+pages_build_output_dir = "./out"
 
 [env.production.vars]
 NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY = ""  # Will be set in Cloudflare dashboard
